@@ -202,6 +202,7 @@ end
 ---3. Calling `opts.provider.start` and polling for the port.
 ---
 ---@param launch boolean? Whether to launch a new server if none found. Defaults to true.
+---@return Promise<number>
 function M.get_port(launch)
   launch = launch ~= false
   return require("opencode.promise").new(function(resolve, reject)
