@@ -16,18 +16,20 @@ local OPENCODE_HEARTBEAT_INTERVAL_MS = 30000
 ---@type number?
 local subscription_job_id = nil
 ---@type opencode.cli.server.Server?
-M.subscribed_server = nil
+M.connected_server = nil
 
 ---Subscribe to `opencode`'s Server-Sent Events (SSE) to execute `OpencodeEvent:<event.type>` autocmds.
 ---
+---The currently-subscribed server will be prioritized for future `require("opencode.cli.server").get()` calls.
+---
 ---@param server opencode.cli.server.Server The port to subscribe to. If nil, will attempt to find an active `opencode` server.
-function M.subscribe(server)
+function M.connect(server)
   if not require("opencode.config").opts.events.enabled then
     return
   end
 
   if subscription_job_id then
-    M.unsubscribe()
+    M.disconnect()
   end
 
   require("opencode.promise")
@@ -36,9 +38,9 @@ function M.subscribe(server)
       subscription_job_id = require("opencode.cli.client").sse_subscribe(
         _server.port,
         function(response) ---@param response opencode.cli.client.Event
-          M.subscribed_server = _server
+          M.connected_server = _server
           heartbeat_timer:stop()
-          heartbeat_timer:start(OPENCODE_HEARTBEAT_INTERVAL_MS + 5000, 0, vim.schedule_wrap(M.unsubscribe))
+          heartbeat_timer:start(OPENCODE_HEARTBEAT_INTERVAL_MS + 5000, 0, vim.schedule_wrap(M.disconnect))
 
           vim.api.nvim_exec_autocmds("User", {
             pattern = "OpencodeEvent:" .. response.type,
@@ -55,11 +57,11 @@ function M.subscribe(server)
     end)
 end
 
-function M.unsubscribe()
+function M.disconnect()
   if subscription_job_id then
     vim.fn.jobstop(subscription_job_id)
   end
-  M.subscribed_server = nil
+  M.connected_server = nil
   heartbeat_timer:stop()
 
   vim.api.nvim_exec_autocmds("User", {

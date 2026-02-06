@@ -4,7 +4,7 @@ function M.select_server()
   return require("opencode.cli.server")
     .select()
     :next(function(server)
-      require("opencode.events").subscribe(server)
+      require("opencode.events").connect(server)
       return server
     end)
     :catch(function(err)

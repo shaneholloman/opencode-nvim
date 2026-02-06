@@ -33,8 +33,8 @@ end
 
 ---@return string
 function M.statusline()
-  local subscribed_server = require("opencode.events").subscribed_server
-  local port = subscribed_server and subscribed_server.port
+  local connected_server = require("opencode.events").connected_server
+  local port = connected_server and connected_server.port
   return M.statusline_icon() .. (port and (" :" .. tostring(port)) or "")
 end
 

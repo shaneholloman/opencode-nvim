@@ -196,12 +196,10 @@ local function get_configured_server()
 end
 
 ---@return Promise<opencode.cli.server.Server>
-local function get_subscribed_server()
-  local subscribed_server = require("opencode.events").subscribed_server
-  if subscribed_server then
-    -- The events module unsubscribes when the server disconnects or its heartbeart disappears,
-    -- so the test should never reallllly fail. But doesn't hurt.
-    return get_server(subscribed_server.port)
+local function get_connected_server()
+  local connected_server = require("opencode.events").connected_server
+  if connected_server then
+    return get_server(connected_server.port)
   else
     return require("opencode.promise").reject("No currently subscribed `opencode` server")
   end
@@ -222,7 +220,7 @@ function M.get(launch)
   launch = launch ~= false
 
   local Promise = require("opencode.promise")
-  return get_subscribed_server()
+  return get_connected_server()
     :catch(get_configured_server)
     :catch(M.select)
     :catch(function(err)
@@ -252,7 +250,7 @@ function M.get(launch)
       end)
     end)
     :next(function(server) ---@param server opencode.cli.server.Server
-      require("opencode.events").subscribe(server)
+      require("opencode.events").connect(server)
       return server
     end)
 end
